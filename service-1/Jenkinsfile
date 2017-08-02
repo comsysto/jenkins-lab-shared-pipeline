@@ -13,7 +13,7 @@ node {
 			}
 			
 			stage('Deploy') {
-				sh 'scp build/labs/service-1-0.0.1-SNAPSHOT.jar matthias@192.168.99.101:~/service-1'
+				sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar matthias@192.168.99.101:~/service-1'
 			}
 			
 			stage('Healthcheck') {
@@ -25,5 +25,4 @@ node {
 		echo "Caught: ${exc}"
 		currentBuild.result = 'FAILURE'
 	}
-	step([$class: 'Mailer', recipients: 'matthias.drews@comsysto.com'])
 }
