@@ -1,7 +1,10 @@
 //noinspection GroovyAssignabilityCheck
 node {
+    def mvnHome = tool 'Maven 3'
+    def mvn = "${mvnHome}/bin/mvn"
+
     stage ('Build Pet Clinic') {
         git 'https://github.com/spring-projects/spring-petclinic'
-        sh 'mvn clean install -DskipTests'
+        sh "${mvn} clean install -DskipTests"
     }
 }
