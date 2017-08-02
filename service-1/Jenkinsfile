@@ -1,0 +1,26 @@
+node {
+	try {
+		stage('Checkout') {
+			checkout scm
+			sh 'git clean -dfx'
+		}
+
+		dir('service-1') {	
+			stage('Build') {
+				sh 'mvn clean install'
+			}
+			
+			stage('Deploy') {
+			
+			}
+			
+			stage('Healthcheck') {
+			
+			}
+		}
+	}
+	catch (exc) {
+		echo 'Something failed, I should sound the klaxons!'
+		throw
+	}
+}
