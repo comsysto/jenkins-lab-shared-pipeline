@@ -1,7 +1,7 @@
 node {
 	try {
 		stage('Checkout') {
-			checkout scm
+			git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git'
 			sh 'git clean -dfx'
 		}
 
