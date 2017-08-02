@@ -1,26 +1,59 @@
-parallel(
-        "stream 1": {
-            node {
-                withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+List<Module> modules = [
+        new Module("spring-boot-sample-activemq"),
+        new Module("spring-boot-sample-aop"),
+        new Module("spring-boot-sample-batch"),
+        new Module("spring-boot-sample-cache")]
 
-                    stage('Spring Pet Clinic') {
-                        git 'https://github.com/spring-projects/spring-petclinic'
+def branches = [:]
+
+for (module in modules) {
+    branches[module.name] = {
+        node('!master') {
+            withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+
+                stage(module.name) {
+                    git 'https://github.com/spring-projects/spring-boot'
+                    dir("spring-boot-samples/${module.name}") {
                         sh 'mvn -B clean install'
                     }
                 }
             }
-        },
+        }
+    }
+}
 
-        "stream 2": {
-            node {
-                withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+parallel branches
 
-                    stage('Spring Boot ActiveMQ Sample') {
-                        git 'https://github.com/spring-projects/spring-boot'
-                        dir('spring-boot-samples/spring-boot-sample-activemq') {
-                            sh 'mvn -B clean install'
-                        }
-                    }
-                }
+class Module implements Serializable {
+
+    final String name
+    final String additionalParameters
+
+    boolean failure = false
+    String errorMessage = ''
+    boolean logAvailable = false
+
+    Module(String name) {
+        this.name = name
+        this.additionalParameters = ''
+    }
+
+    Module(String name, String additionalParameters) {
+        this.additionalParameters = additionalParameters
+        this.name = name
+    }
+
+    def fail(Throwable e, boolean logAvailable) {
+        this.logAvailable = logAvailable
+        failure = true
+
+        while (e != null) {
+            def msg = e.getMessage()
+            if (msg != null) {
+                msg = e.getClass().getName() + ": " + msg
+                this.errorMessage = this.errorMessage.isEmpty() ? msg : this.errorMessage + ", caused by " + msg
             }
-        })
+            e = e.getCause()
+        }
+    }
+}
