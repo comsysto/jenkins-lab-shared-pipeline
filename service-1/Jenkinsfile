@@ -16,7 +16,7 @@ node {
 				sh 'ssh matthias@192.168.99.101 ./jenkinslab/service-1/shutdown.sh || true'
 				sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar startup.sh shutdown.sh matthias@192.168.99.101:~/jenkinslab/service-1/'
 				sh 'ssh matthias@192.168.99.101 chmod -R 755 jenkinslab/service-1'
-				sh 'ssh matthias@192.168.99.101 ./jenkinslab/service-1/startup.sh'
+				sh 'ssh matthias@192.168.99.101 ./jenkinslab/service-1/startup.sh &'
 			}
 			
 			stage('Healthcheck') {
