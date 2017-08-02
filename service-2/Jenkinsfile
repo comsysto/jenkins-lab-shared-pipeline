@@ -1,0 +1,17 @@
+node {
+    stage('Checkout') {
+        git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git', credentialsId: 'GITHUB'
+    }
+    stage('Build') {
+        sh 'cd service-1'
+        sh './gradlew clean build'
+
+    }
+    stage('Deploy'){
+        sh 'echo deploy'
+    }
+    stage('Results') {
+        junit '**/target/surefire-reports/TEST-*.xml'
+        archive 'target/*.jar'
+    }
+}
