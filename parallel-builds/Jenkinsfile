@@ -1,0 +1,8 @@
+node {
+    stage ('Build Pet Clinic') {
+
+    }
+    state ('Build WS Samples ') {
+        
+    }
+}
