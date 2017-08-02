@@ -1,5 +1,19 @@
+node {
+    withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+        stage('Build unbescape-1.1.6-donotuse') {
+            git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git',
+                branch: 'feature/parallel-builds',
+                credentialsId: 'Github'
+
+            dir('parallel-builds/unbescape') {
+                sh 'mvn -B clean install -Dgpg.skip=true'
+            }
+        }
+    }
+}
 
 List<StageDef> stageDefs = [
+        new StageDef("2.8.9"),
         new StageDef("2.6.3"),
         new StageDef("2.6.2"),
         new StageDef("2.0.0")]
@@ -7,18 +21,18 @@ List<StageDef> stageDefs = [
 def branches = [:]
 
 for (module in stageDefs) {
-    branches[module.jacksonVersion] = {
+
+    String jacksonVersion = module.jacksonVersion
+    String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
+
+    branches[branchName] = {
         node('!master') {
             withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
 
-                stage("Build ThymeLeaf with Jackson ${module.jacksonVersion}") {
-                    try {
-                        git 'https://github.com/thymeleaf/thymeleaf.git'
-                        sh "mvn -B clean install -Djackson.version=${module.jacksonVersion}"
-                    } catch (e) {
-                        echo "BUILD FAILED: ${e.getMessage()}"
-                        currentBuild.result = 'FAILURE'
-                    }
+                stage(branchName) {
+                    git url: 'https://github.com/thymeleaf/thymeleaf.git',
+                        branch: '3.0-master'
+                    sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dunbescape.version=1.1.6-donotuse -Dgpg.skip=true"
                 }
             }
         }
@@ -26,6 +40,10 @@ for (module in stageDefs) {
 }
 
 parallel branches
+
+node {
+    cleanWs cleanWhenFailure: false
+}
 
 class StageDef implements Serializable {
 
