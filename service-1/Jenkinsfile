@@ -25,7 +25,7 @@ node {
 					if (!response.content.contains("status":"UP")) {
 						error('alive check failed: $(response.content)')
 					}
-					sleep 10
+					sleep time: 10, units: 'SECONDS'
 				}
 			}
 		}
