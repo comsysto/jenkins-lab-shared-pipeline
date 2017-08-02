@@ -1,20 +1,22 @@
-List<Module> modules = [
-        new Module("3.0.6.RELEASE"),
-        new Module("3.0.5.RELEASE"),
-        new Module("2.1.5.RELEASE")]
+
+List<StageDef> stageDefs = [
+        new StageDef("2.6.3"),
+        new StageDef("2.6.2"),
+        new StageDef("2.0.0")]
 
 def branches = [:]
 
-for (module in modules) {
-    branches[module.thymeLeafVersion] = {
+for (module in stageDefs) {
+    branches[module.jacksonVersion] = {
         node('!master') {
             withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
 
-                stage("thymeleaf.version=${module.thymeLeafVersion}") {
+                stage("Build ThymeLeaf with Jackson ${module.jacksonVersion}") {
                     try {
-                        git 'https://github.com/spring-projects/spring-petclinic'
-                        sh "mvn -B clean install -Dthymeleaf.version=${module.thymeLeafVersion}"
-                    } catch (Throwable) {
+                        git 'https://github.com/thymeleaf/thymeleaf.git'
+                        sh "mvn -B clean install -Djackson.version=${module.jacksonVersion}"
+                    } catch (e) {
+                        echo "BUILD FAILED: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
                     }
                 }
@@ -22,17 +24,14 @@ for (module in modules) {
         }
     }
 }
-node {
-    echo branches.toString()
-}
 
 parallel branches
 
-class Module implements Serializable {
+class StageDef implements Serializable {
 
-    String thymeLeafVersion
+    String jacksonVersion
 
-    Module(final String thymeLeafVersion) {
-        this.thymeLeafVersion = thymeLeafVersion
+    StageDef(final String jacksonVersion) {
+        this.jacksonVersion = jacksonVersion
     }
 }
