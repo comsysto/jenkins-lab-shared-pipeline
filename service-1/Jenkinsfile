@@ -21,11 +21,11 @@ node {
 			
 			stage('Healthcheck') {
 				retry(5) {
+					sleep time: 10, units: 'SECONDS'
 					def response = httpRequest 'http://192.168.99.101:9090/health'
 					if (!response.content.contains("status":"UP")) {
 						error('alive check failed: $(response.content)')
 					}
-					sleep time: 10, units: 'SECONDS'
 				}
 			}
 		}
