@@ -1,23 +1,26 @@
-//noinspection GroovyAssignabilityCheck
-node('jenkins-agent-1') {
-    withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+parallel(
+        "stream 1": {
+            node {
+                withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
 
-        stage('Build Pet Clinic') {
-            git 'https://github.com/spring-projects/spring-petclinic'
-            sh 'mvn -B clean install -DskipTests'
-        }
-    }
-}
-
-//noinspection GroovyAssignabilityCheck
-node('jenkins-agent-2') {
-    withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
-
-        stage('Build Spring Boot ActiveMQ Sample') {
-            git 'https://github.com/spring-projects/spring-boot'
-            dir('spring-boot-samples/spring-boot-sample-activemq') {
-                sh 'mvn -B clean install -DskipTests'
+                    stage('Spring Pet Clinic') {
+                        git 'https://github.com/spring-projects/spring-petclinic'
+                        sh 'mvn -B clean install'
+                    }
+                }
             }
-        }
-    }
-}
+        },
+
+        "stream 2": {
+            node {
+                withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+
+                    stage('Spring Boot ActiveMQ Sample') {
+                        git 'https://github.com/spring-projects/spring-boot'
+                        dir('spring-boot-samples/spring-boot-sample-activemq') {
+                            sh 'mvn -B clean install'
+                        }
+                    }
+                }
+            }
+        })
