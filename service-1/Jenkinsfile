@@ -8,7 +8,7 @@ node {
 
 		dir('service-1') {	
 			stage('Build') {
-				sh 'mvn clean install'
+				sh 'gradle build'
 			}
 			
 			stage('Deploy') {
