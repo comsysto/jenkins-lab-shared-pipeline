@@ -1,8 +1,7 @@
+//noinspection GroovyAssignabilityCheck
 node {
     stage ('Build Pet Clinic') {
-
-    }
-    state ('Build WS Samples ') {
-        
+        git 'https://github.com/spring-projects/spring-petclinic'
+        sh 'mvn clean install -DskipTests'
     }
 }
