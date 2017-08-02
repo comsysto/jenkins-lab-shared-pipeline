@@ -1,3 +1,4 @@
+echo 'starting'
 node {
     stage('Checkout') {
         git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git', credentialsId: 'GITHUB'
@@ -8,7 +9,7 @@ node {
 
     }
     stage('Deploy'){
-        sh 'echo deploy'
+        echo 'deploy'
     }
     stage('Results') {
         junit '**/target/surefire-reports/TEST-*.xml'
