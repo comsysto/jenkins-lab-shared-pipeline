@@ -3,16 +3,19 @@ node {
     stage('Checkout') {
         git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git', credentialsId: 'GITHUB_CRED'
     }
-    stage('Build') {
-        sh 'cd service-1'
-        sh './gradlew clean build'
+    dir('service-2'){
+        stage('Build') {
+            sh './gradlew clean build'
 
-    }
-    stage('Deploy'){
-        echo 'deploy'
-    }
-    stage('Results') {
-        junit '**/target/surefire-reports/TEST-*.xml'
-        archive 'target/*.jar'
+        }
+        stage('Deploy'){
+            sshagent (credentials: ['VAGRANT-SSH']) {
+                sh 'ssh vagrant@192.168.33.10 -o StrictHostKeyChecking=no'
+            }
+        }
+        stage('Results') {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive 'target/*.jar'
+        }
     }
 }
