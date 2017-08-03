@@ -7,8 +7,7 @@ node {
 
 		dir('service-1') {	
 			stage('Build') {
-				env.PATH = "${tool 'gradle'}/bin:${env.PATH}"
-				sh 'gradle build'
+				gradleBuild
 			}
 			
 			stage('Deploy') {
