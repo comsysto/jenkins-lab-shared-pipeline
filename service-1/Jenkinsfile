@@ -12,10 +12,8 @@ node {
 			}
 			
 			stage('Deploy') {
-				httpRequest url: 'http://jenkinslab-deployserver:9090/shutdown', httpMode: 'POST', validResponseCodes: '200,408'
 				withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-					sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar $USERNAME@jenkinslab-deployserver:~/jenkinslab/service-1/'
-					sh 'ssh $USERNAME@jenkinslab-deployserver "nohup java -jar jenkinslab/service-1/service-1-0.0.1-SNAPSHOT.jar --server.port=9090" &'
+					deploy filename: 'service-1-0.0.1-SNAPSHOT.jar', user: '$USERNAME', server: 'jenkinslab-deployserver', port: '9090'
   				}
 			}
 			
