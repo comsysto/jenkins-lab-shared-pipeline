@@ -6,17 +6,19 @@ node {
 
         dir('service-2') {
 
+            def jenkinsSshCredentialsId = 'VAGRANT-SSH'
+            def jarName = 'service-2-0.0.1-SNAPSHOT.jar'
+            def serverUsername = 'vagrant'
+            def serverHostname = '192.168.33.10'
+            def serverPort = '9090'
+            def serverDeploymentPath = '~/jenkinslab/service-2/'
+
             stage('Build') {
                 sh './gradlew clean build'
             }
 
             stage('Deploy') {
-                def jenkinsSshCredentialsId = 'VAGRANT-SSH'
-                def jarName = 'service-2-0.0.1-SNAPSHOT.jar'
-                def serverUsername = 'vagrant'
-                def serverHostname = '192.168.33.10'
-                def serverPort = '9090'
-                def serverDeploymentPath = '~/jenkinslab/service-2/'
+
 
                 httpRequest url: "http://${serverHostname}:${serverPort}/shutdown", httpMode: 'POST', validResponseCodes: '200,408,404'
                 sshagent(credentials: [jenkinsSshCredentialsId]) {
@@ -26,7 +28,9 @@ node {
                 }
             }
 
-
+            stage('Healthcheck') {
+                healthcheck("http://${serverHostname}:${serverPort}/health")
+            }
 
         }
     } catch (exc) {
