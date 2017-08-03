@@ -20,10 +20,7 @@ node {
 			}
 			
 			stage('Healthcheck') {
-				retry(5) {
-					sleep time: 10, units: 'SECONDS'
-					httpRequest url: 'http://jenkinslab-deployserver:9090/health', validResponseContent: '"status":"UP"'
-				}
+				healthcheck 'http://jenkinslab-deployserver:9090/health'
 			}
 		}
 	}
