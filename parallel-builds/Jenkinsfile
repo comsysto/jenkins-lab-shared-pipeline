@@ -24,6 +24,7 @@ for (module in stageDefs) {
 
     String jacksonVersion = module.jacksonVersion
     String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
+    String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
 
     branches[branchName] = {
         node('!master') {
@@ -33,6 +34,8 @@ for (module in stageDefs) {
                     git url: 'https://github.com/thymeleaf/thymeleaf.git',
                         branch: '3.0-master'
                     sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dunbescape.version=1.1.6-donotuse -Dgpg.skip=true"
+//                    sh "mvn -B dependency:tree | tee target/${outFileName} ; test \${PIPESTATUS[0]} -eq 0"
+//                    stash name: outFileName, includes: "target/${outFileName}"
                 }
             }
         }
@@ -42,7 +45,7 @@ for (module in stageDefs) {
 parallel branches
 
 node {
-    cleanWs cleanWhenFailure: false
+    cleanWs
 }
 
 class StageDef implements Serializable {
