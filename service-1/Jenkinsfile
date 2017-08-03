@@ -3,7 +3,7 @@ withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariabl
     springBootPipeline {
         hostname = 'jenkinslab-deployserver'
         port = '9091'
-        username = $USERNAME
+        username = '$USERNAME'
         filename = 'service-1-0.0.1-SNAPSHOT.jar'
         servicename = 'service-1'
     }

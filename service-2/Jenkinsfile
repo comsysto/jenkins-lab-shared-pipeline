@@ -3,9 +3,8 @@ withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariabl
     springBootPipeline {
         hostname = '192.168.33.10'
         port = '9092'
-        username = $USERNAME
+        username = '$USERNAME'
         filename = 'service-2-0.0.1-SNAPSHOT.jar'
         servicename = 'service-2'
-
     }
 }
