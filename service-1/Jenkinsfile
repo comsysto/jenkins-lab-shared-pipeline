@@ -7,7 +7,7 @@ node {
 
 		dir('service-1') {	
 			stage('Build') {
-				gradleBuild
+				gradleBuild()
 			}
 			
 			stage('Deploy') {
