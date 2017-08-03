@@ -18,3 +18,11 @@ Jenkins is now available at http://localhost:8080
 
 
 ### Setup Jenkins
+
+default plugins + http request
+globale variablen
+    'DEPLOYMENT_SERVER_HOSTNAME'
+    'DEPLOYMENT_USER'
+global shared lib
+pipeline config + github credentials
+ssh keys
