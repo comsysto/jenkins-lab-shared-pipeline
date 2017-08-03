@@ -1,6 +1,6 @@
 springBootPipeline {
-    hostname = System.getenv()['DEPLOYMENT_SERVER_HOSTNAME']
-    username = System.getenv()['DEPLOYMENT_USER']
+    hostname = env.DEPLOYMENT_SERVER_HOSTNAME
+    username = env.DEPLOYMENT_USER
     port = '9092'
     filename = 'service-2-0.0.1-SNAPSHOT.jar'
     servicename = 'service-2'
