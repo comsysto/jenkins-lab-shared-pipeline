@@ -13,16 +13,16 @@ node {
 			}
 			
 			stage('Deploy') {
-				sh 'ssh matthias@192.168.99.101 ./jenkinslab/service-1/shutdown.sh || true'
-				sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar startup.sh shutdown.sh matthias@192.168.99.101:~/jenkinslab/service-1/'
-				sh 'ssh matthias@192.168.99.101 chmod -R 755 jenkinslab/service-1'
-				sh 'ssh matthias@192.168.99.101 ./jenkinslab/service-1/startup.sh &'
+				sh 'ssh matthias@jenkinslab-deployserver ./jenkinslab/service-1/shutdown.sh || true'
+				sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar startup.sh shutdown.sh matthias@jenkinslab-deployserver:~/jenkinslab/service-1/'
+				sh 'ssh matthias@jenkinslab-deployserver chmod -R 755 jenkinslab/service-1'
+				sh 'ssh matthias@jenkinslab-deployserver ./jenkinslab/service-1/startup.sh &'
 			}
 			
 			stage('Healthcheck') {
 				retry(5) {
 					sleep time: 10, units: 'SECONDS'
-					def response = httpRequest 'http://192.168.99.101:9090/health'
+					def response = httpRequest 'http://jenkinslab-deployserver:9090/health'
 					if (!response.content.contains('"status":"UP"')) {
 						error('alive check failed: $(response.content)')
 					}
