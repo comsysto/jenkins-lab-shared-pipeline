@@ -1,7 +1,6 @@
 node {
 	try {
 		stage('Checkout') {
-			echo 'Checkout'
 			checkout scm
 			sh 'git clean -dfx'
 		}
