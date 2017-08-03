@@ -1,4 +1,4 @@
-node {
+node('master') {
     withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
         stage('Build unbescape-1.1.6-donotuse') {
             git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git',
@@ -38,8 +38,8 @@ for (module in stageDefs) {
                 stage(branchName) {
                     unstash name: 'thymeleaf-sources'
                     sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dunbescape.version=1.1.6-donotuse -Dgpg.skip=true"
-//                    sh "mvn -B dependency:tree | tee target/${outFileName} ; test \${PIPESTATUS[0]} -eq 0"
-//                    stash name: outFileName, includes: "target/${outFileName}"
+                    sh "mvn -B dependency:tree | tee target/out.deps ; test \${PIPESTATUS[0]} -eq 0"
+                    stash name: outFileName, includes: "target/${outFileName}"
                 }
             }
         }
