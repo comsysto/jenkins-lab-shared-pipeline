@@ -1,33 +1,11 @@
-node {
-    try {
-        stage('Checkout') {
-            git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git', credentialsId: 'GITHUB_CRED'
-        }
+withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
 
-        dir('service-2') {
+    springBootPipeline {
+        hostname = '192.168.33.10'
+        port = '9092'
+        username = '$USERNAME'
+        filename = 'service-2-0.0.1-SNAPSHOT.jar'
+        servicename = 'service-2'
 
-            def jenkinsSshCredentialsId = 'VAGRANT-SSH'
-            def jarName = 'service-2-0.0.1-SNAPSHOT.jar'
-            def serverHostname = '192.168.33.10'
-            def serverPort = '9090'
-
-            stage('Build') {
-                sh './gradlew clean build'
-            }
-
-            stage('Deploy') {
-                sshagent(credentials: [jenkinsSshCredentialsId]) {
-                    deploy(jarName, 'vagrant', serverHostname, serverPort, '~/')
-                }
-            }
-
-            stage('Healthcheck') {
-                healthcheck("http://${serverHostname}:${serverPort}/health")
-            }
-
-        }
-    } catch (exc) {
-        echo "Caught: ${exc}"
-        currentBuild.result = 'FAILURE'
     }
 }
