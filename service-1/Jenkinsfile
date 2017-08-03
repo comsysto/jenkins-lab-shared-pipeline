@@ -16,7 +16,7 @@ node {
 				httpRequest url: 'http://jenkinslab-deployserver:9090/shutdown', httpMode: 'POST', validResponseCodes: '200,408'
 				sh 'scp build/libs/service-1-0.0.1-SNAPSHOT.jar matthias@jenkinslab-deployserver:~/jenkinslab/service-1/'
 				sh 'ssh matthias@jenkinslab-deployserver chmod -R 755 jenkinslab/service-1'
-				sh 'ssh matthias@jenkinslab-deployserver "nohup java -jar jenkinslab/service-1/service-1-0.0.1-SNAPSHOT.jar --server.port=9090 &"'
+				sh 'ssh matthias@jenkinslab-deployserver "nohup java -jar jenkinslab/service-1/service-1-0.0.1-SNAPSHOT.jar --server.port=9090" &'
 			}
 			
 			stage('Healthcheck') {
