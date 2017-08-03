@@ -1,28 +1,5 @@
-node {
-	try {
-		stage('Checkout') {
-			checkout scm
-			sh 'git clean -dfx'
-		}
-
-		dir('service-1') {	
-			stage('Build') {
-				gradleBuild()
-			}
-			
-			stage('Deploy') {
-				withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-					deploy('service-1-0.0.1-SNAPSHOT.jar', '$USERNAME', 'jenkinslab-deployserver', '9090')
-  				}
-			}
-			
-			stage('Healthcheck') {
-				healthcheck('http://jenkinslab-deployserver:9090/health')
-			}
-		}
-	}
-	catch (exc) {
-		echo "Caught: ${exc}"
-		currentBuild.result = 'FAILURE'
-	}
+springBootPipeline{
+	server = 'jenkinslab-deployserver'
+	port = '9090'
+	filename = 'service-1-0.0.1-SNAPSHOT.jar'
 }
