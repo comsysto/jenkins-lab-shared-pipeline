@@ -13,12 +13,12 @@ node {
 			
 			stage('Deploy') {
 				withCredentials([usernamePassword(credentialsId: 'Deployserver', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-					deploy filename: 'service-1-0.0.1-SNAPSHOT.jar', user: '$USERNAME', server: 'jenkinslab-deployserver', port: '9090'
+					deploy('service-1-0.0.1-SNAPSHOT.jar', $USERNAME, 'jenkinslab-deployserver', '9090')
   				}
 			}
 			
 			stage('Healthcheck') {
-				healthcheck 'http://jenkinslab-deployserver:9090/health'
+				healthcheck('http://jenkinslab-deployserver:9090/health')
 			}
 		}
 	}
