@@ -21,10 +21,7 @@ node {
 			stage('Healthcheck') {
 				retry(5) {
 					sleep time: 10, units: 'SECONDS'
-					def response = httpRequest 'http://jenkinslab-deployserver:9090/health'
-					if (!response.content.contains('"status":"UP"')) {
-						error('alive check failed: $(response.content)')
-					}
+					httpRequest url: 'http://jenkinslab-deployserver:9090/health', validResponseContent: '"status":"UP"'
 				}
 			}
 		}
