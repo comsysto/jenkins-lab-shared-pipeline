@@ -1,20 +1,9 @@
 node('master') {
-    withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
-        stage('Build unbescape-1.1.6-donotuse') {
-            git url: 'https://github.com/comsysto/jenkins-lab-shared-pipeline.git',
-                branch: 'feature/parallel-builds',
-                credentialsId: 'Github'
-
-            dir('parallel-builds/unbescape') {
-                sh 'mvn -B clean install -Dgpg.skip=true'
-            }
-        }
-        stage('Checkout ThymeLeaf') {
-            git url: 'https://github.com/thymeleaf/thymeleaf.git',
-                branch: '3.0-master'
-            stash name: 'thymeleaf-sources',
-                  includes: 'pom.xml,src/*'
-        }
+    stage('Checkout ThymeLeaf') {
+        git url: 'https://github.com/thymeleaf/thymeleaf.git',
+            branch: '3.0-master'
+        stash name: 'thymeleaf-sources',
+              includes: 'pom.xml,src/*'
     }
 }
 
@@ -26,9 +15,9 @@ List<StageDef> stageDefs = [
 
 def branches = [:]
 
-for (module in stageDefs) {
+for (stageDef in stageDefs) {
 
-    String jacksonVersion = module.jacksonVersion
+    String jacksonVersion = stageDef.jacksonVersion
     String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
     String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
 
@@ -36,10 +25,16 @@ for (module in stageDefs) {
         node('!master') {
             withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
                 stage(branchName) {
-                    unstash name: 'thymeleaf-sources'
-                    sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dunbescape.version=1.1.6-donotuse -Dgpg.skip=true"
-                    sh "mvn -B dependency:tree | tee target/out.deps ; test \${PIPESTATUS[0]} -eq 0"
-                    stash name: outFileName, includes: "target/${outFileName}"
+                    try {
+                        unstash name: 'thymeleaf-sources'
+
+                        sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dgpg.skip=true"
+                        sh "mvn -B dependency:tree -Djackson.version=${jacksonVersion} | tee target/${outFileName}"
+                        stash name: outFileName, includes: "target/${outFileName}"
+                    }
+                    catch (ignored) {
+                        currentBuild.result = 'FAILURE'
+                    }
                 }
             }
         }
@@ -48,8 +43,47 @@ for (module in stageDefs) {
 
 parallel branches
 
-node {
-    cleanWs
+node('master') {
+    stage('Publish Report') {
+        sh "mkdir -p target"
+        writeFile file: "target/integration-result.html",
+                  text: buildHtmlReport(stageDefs)
+        publishHTML([
+                allowMissing         : false,
+                alwaysLinkToLastBuild: true,
+                keepAll              : true,
+                reportDir            : 'target',
+                reportFiles          : 'integration-result.html',
+                reportName           : 'Integration result'])
+    }
+}
+
+private String buildHtmlReport(List<StageDef> stageDefs) {
+    StringBuilder sb = new StringBuilder(
+            "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>")
+
+    for (stageDef in stageDefs) {
+        String jacksonVersion = stageDef.jacksonVersion
+        String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
+
+        try {
+            unstash name: outFileName
+            success = true
+        }
+        catch (ignored) {
+            success = false
+        }
+        sb.append(
+                "<tr>" +
+                "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
+                "<td width='5%'>&nbsp;</td>" +
+                "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
+                "<td width='5%'>&nbsp;</td>" +
+                "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
+                "</tr>")
+    }
+    sb.append("</table></p>")
+    sb.toString()
 }
 
 class StageDef implements Serializable {
