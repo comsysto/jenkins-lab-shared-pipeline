@@ -11,12 +11,18 @@ node {
             }
 
             stage('Deploy') {
-                sshagent(credentials: ['VAGRANT-SSH']) {
-                    sh 'ssh -o StrictHostKeyChecking=no vagrant@192.168.33.10  mkdir -p service-2'
-                    sh 'ssh -o StrictHostKeyChecking=no vagrant@192.168.33.10 ./service-2/shutdown.sh || true'
-                    sh 'scp -o StrictHostKeyChecking=no build/libs/service-2-0.0.1-SNAPSHOT.jar startup.sh shutdown.sh vagrant@192.168.33.10:~/service-2/'
-                    sh 'ssh -o StrictHostKeyChecking=no agrant@192.168.33.10 chmod -R 755 /service-2'
-                    sh 'ssh -o StrictHostKeyChecking=no vagrant@192.168.33.10 ./service-2/startup.sh &'
+                def jenkinsSshCredentialsId = 'VAGRANT-SSH'
+                def jarName = 'service-2-0.0.1-SNAPSHOT.jar'
+                def serverUsername = 'vagrant'
+                def serverHostname = '192.168.33.10'
+                def serverPort = '9090'
+                def serverDeploymentPath = '~/jenkinslab/service-2/'
+
+                httpRequest url: "http://${serverHostname}:${serverPort}/shutdown", httpMode: 'POST', validResponseCodes: '200,408,404'
+                sshagent(credentials: [jenkinsSshCredentialsId]) {
+                    sh "ssh ${serverUsername}@${serverHostname} \"mkdir -p ${serverDeploymentPath}\""
+                    sh "scp build/libs/${jarName} ${serverUsername}@${serverHostname}:${serverDeploymentPath}"
+                    sh "ssh ${serverUsername}@${serverHostname} \"nohup java -jar ${serverDeploymentPath}${jarName} --server.port=${serverPort}\" &"
                 }
             }
 
