@@ -1,10 +1,96 @@
-//noinspection GroovyAssignabilityCheck
-node {
-    def mvnHome = tool 'Maven 3'
-    def mvn = "${mvnHome}/bin/mvn"
+node('master') {
+    stage('Checkout ThymeLeaf') {
+        git url: 'https://github.com/thymeleaf/thymeleaf.git',
+            branch: '3.0-master'
+        stash name: 'thymeleaf-sources',
+              includes: 'pom.xml,src/*'
+    }
+}
 
-    stage ('Build Pet Clinic') {
-        git 'https://github.com/spring-projects/spring-petclinic'
-        sh "${mvn} clean install -DskipTests"
+List<StageDef> stageDefs = [
+        new StageDef("2.8.9"),
+        new StageDef("2.6.3"),
+        new StageDef("2.6.2"),
+        new StageDef("2.0.0")]
+
+def branches = [:]
+
+for (stageDef in stageDefs) {
+
+    String jacksonVersion = stageDef.jacksonVersion
+    String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
+    String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
+
+    branches[branchName] = {
+        node('!master') {
+            withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
+                stage(branchName) {
+                    try {
+                        unstash name: 'thymeleaf-sources'
+
+                        sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dgpg.skip=true"
+                        sh "mvn -B dependency:tree -Djackson.version=${jacksonVersion} | tee target/${outFileName}"
+                        stash name: outFileName, includes: "target/${outFileName}"
+                    }
+                    catch (ignored) {
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+    }
+}
+
+parallel branches
+
+node('master') {
+    stage('Publish Report') {
+        sh "mkdir -p target"
+        writeFile file: "target/integration-result.html",
+                  text: buildHtmlReport(stageDefs)
+        publishHTML([
+                allowMissing         : false,
+                alwaysLinkToLastBuild: true,
+                keepAll              : true,
+                reportDir            : 'target',
+                reportFiles          : 'integration-result.html',
+                reportName           : 'Integration result'])
+    }
+}
+
+private String buildHtmlReport(List<StageDef> stageDefs) {
+    StringBuilder sb = new StringBuilder(
+            "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>")
+
+    for (stageDef in stageDefs) {
+        String jacksonVersion = stageDef.jacksonVersion
+        String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
+
+        try {
+            unstash name: outFileName
+            success = true
+        }
+        catch (ignored) {
+            success = false
+        }
+        sb.append(
+                "<tr>" +
+                "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
+                "<td width='5%'>&nbsp;</td>" +
+                "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
+                "<td width='5%'>&nbsp;</td>" +
+                "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
+                "</tr>")
+    }
+    sb.append("</table></p>")
+    sb.toString()
+}
+
+class StageDef implements Serializable {
+
+    String jacksonVersion
+
+    StageDef(final String jacksonVersion) {
+        this.jacksonVersion = jacksonVersion
     }
 }
