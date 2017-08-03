@@ -9,6 +9,12 @@ node {
                 sh 'mvn -B clean install -Dgpg.skip=true'
             }
         }
+        stage('Checkout ThymeLeaf') {
+            git url: 'https://github.com/thymeleaf/thymeleaf.git',
+                branch: '3.0-master'
+            stash name: 'thymeleaf-sources',
+                  includes: 'pom.xml,src/*'
+        }
     }
 }
 
@@ -29,10 +35,8 @@ for (module in stageDefs) {
     branches[branchName] = {
         node('!master') {
             withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
-
                 stage(branchName) {
-                    git url: 'https://github.com/thymeleaf/thymeleaf.git',
-                        branch: '3.0-master'
+                    unstash name: 'thymeleaf-sources'
                     sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dunbescape.version=1.1.6-donotuse -Dgpg.skip=true"
 //                    sh "mvn -B dependency:tree | tee target/${outFileName} ; test \${PIPESTATUS[0]} -eq 0"
 //                    stash name: outFileName, includes: "target/${outFileName}"
