@@ -2,7 +2,7 @@
 
 ### Create a VM to simulate deployment server
 
-You can use a standard Ubuntu image, and start it in VirtualBox. After stgartup you need to install Java on the VM.
+You can use a standard Ubuntu image, and start it in VirtualBox. After startup you need to install Java on the VM.
 
 
 ### Running Jenkins locally in docker container
@@ -26,7 +26,7 @@ You can start with the recommended plugins. Additionally installation of HTTP Re
 
 The hostname and username of the server you want to deploy your applications have to be defined as environment variables in Jenkins. ('Jenkins verwalten' -> System konfigurieren' -> 'Globale Eigenschaften' -> 'Umgebungsvariablen'). The environment variables are called 'DEPLOYMENT_SERVER_HOSTNAME' and 'DEPLOYMENT_USER'.
 
-* Pipeline libaries
+* Pipeline libraries
 
 The pipeline libraries have to be defined globally in Jenkins. ('Jenkins verwalten' -> System konfigurieren' -> 'Global Pipeline Libraries')
 Add a library with the following  properties:
