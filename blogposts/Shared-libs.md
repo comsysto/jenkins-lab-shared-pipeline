@@ -6,7 +6,12 @@
 
 # Einleitung
 
-* Allgemeine Vorteile & Problemstellung 
+Wer Jenkins als Continuous Integration Server verwendet, ist vermutlich längst auf Jenkins Pipelines umgestiegen oder plant eine Migration zu Pipeline as Code in naher Zukunft. Gerade im Zeitalter von Microservices aber auch bei 'klassischen' Architekturen besteht zu entwickelnde System häufig aus mehreren Projekten, die alle eine eigene Delivery Pipeline in Jenkins benötigen. Man wird schnell feststellen, das in den verschiedenen Pipelines sehr ähnliche Aufgaben anfallen. Daher ist es sinnvoll die Funktionalität zentral für alle Projekte bereitzustellen. 
+
+Jenkins bietet dafür eine einfache und sauberer Lösung: Shared Libaries. In diesem Blogpost stellen wir anhand eines Beispiels vor, wie Pipeline Code extrahiert und wiederverwendet werden kann. Danach gehen wir noch einen Schritt weiter und zeigen wie auf Basis der Shared Libaries, durch Erweiterung der Jenkinsfile DSL, eine kurze und prägnate Deklaration von Pipelines entstehen kann.
+
+Wer sich zuerst in die Grundlagen von Jenkinsfiles einlesen möchte, dem sei der Blogpost
+[Saubere CI-Builds mit Jenkins Pipeline Jobs ](https://comsysto.com/blog-post/saubere-ci-builds-mit-jenkins-pipeline-jobs-docker-und-blue-ocean) auf unsere Webseite und die offizielle Jenkins [Pipeline Dokumention](https://jenkins.io/doc/book/pipeline/) empfohlen.
 
 
 # Ausgangsituation
