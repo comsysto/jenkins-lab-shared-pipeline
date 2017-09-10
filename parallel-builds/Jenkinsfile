@@ -17,7 +17,9 @@ def branches = [:]
 
 for (stageDef in stageDefs) {
 
+    // Never inline this!
     String jacksonVersion = stageDef.jacksonVersion
+
     String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
     String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
 
@@ -59,8 +61,7 @@ node('master') {
 }
 
 private String buildHtmlReport(List<StageDef> stageDefs) {
-    StringBuilder sb = new StringBuilder(
-            "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>")
+    def s = "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>"
 
     for (stageDef in stageDefs) {
         String jacksonVersion = stageDef.jacksonVersion
@@ -73,17 +74,16 @@ private String buildHtmlReport(List<StageDef> stageDefs) {
         catch (ignored) {
             success = false
         }
-        sb.append(
-                "<tr>" +
-                "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
-                "<td width='5%'>&nbsp;</td>" +
-                "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
-                "<td width='5%'>&nbsp;</td>" +
-                "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
-                "</tr>")
+        s += "<tr>" +
+             "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
+             "<td width='5%'>&nbsp;</td>" +
+             "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
+             "<td width='5%'>&nbsp;</td>" +
+             "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
+             "</tr>"
     }
-    sb.append("</table></p>")
-    sb.toString()
+    s += "</table></p>"
+    return s
 }
 
 class StageDef implements Serializable {
