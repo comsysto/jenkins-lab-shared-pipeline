@@ -35,7 +35,7 @@ for (stageDef in stageDefs) {
                         stash name: outFileName, includes: "target/${outFileName}"
                     }
                     catch (ignored) {
-                        currentBuild.result = 'FAILURE'
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
@@ -77,7 +77,9 @@ private String buildHtmlReport(List<StageDef> stageDefs) {
         s += "<tr>" +
              "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
              "<td width='5%'>&nbsp;</td>" +
-             "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
+             "<td width='20%'>" +
+             "${success ? "<font color='green'>SUCCESS</font>" : "<font color='red'>FAILURE</font>"}" +
+             "</td>" +
              "<td width='5%'>&nbsp;</td>" +
              "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
              "</tr>"
