@@ -1,5 +1,16 @@
-# Parallel builds with Jenkins Pipeline
-[toc]
+---
+layout: post
+categories: "DevOps_und_Cloud"
+date:   2018-02-28 04:20:00 +0200
+title: "Parallel builds with Jenkins Pipeline"
+subtitle: "How to use the 'parallel' step"
+description: |
+    In this blog post, we examine the 'parallel' step provided by the Jenkins pipeline plugin and show how to use it correctly, along with some tips and tricks.
+authors:
+  - mixeeUrl: https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/mangatar_bgblack.png
+    mixeeAuthor: "Florian"
+    mixeeTitle: "Java Solution Architect"
+---
 
 ## Introduction
 Since the release of Jenkins 2, its scripted pipeline feature has become a de-facto standard for multi-staged build pipelines. Pipelines have a quite a few advantages over conventional Jenkins builds, among them:
@@ -32,45 +43,13 @@ In this tutorial, we'll use both UI's and switch forth and back as needed. You'l
 ## Parallel Pipeline - concepts
 ### The ``parallel`` step
 Jenkins provides some online help for pipeline steps in form of the page behind the 'Pipeline Syntax' link that you find in the navigation bar of any pipeline project. When you select 'parallel' and click on the little question mark to the right sight, it displys the following:
-```groovy
-// Takes a map from branch names to closures and an optional argument failFast
-// which will terminate all branches upon a failure in any other branch:
-parallel firstBranch: {
-    // do something
-}, secondBranch: {
-    // do something else
-},
-failFast: true|false
-```
+
+{% include gist.html id="316ef8f887f37e64cb68d2d9f93288f1" %}
 
 You're good to go with this if your branches execute completely different code (e.g. run the builds of two independent projects in parallel). In other cases, you'll generate branches programmatically, for example if they run the same build with different parameters. In this case, you will do something like this:
 
-```groovy
-node('master') {
-    ... Preparation work ...
-}
+{% include gist.html id="11010d2f880a006107f5c69d9b071a29" %}
 
-def branches = [:]
-
-for ( iterable ) {
-    def branchName = // ...
-
-    branches[branchName] = {
-        node {
-            stage(branchName) {
-                // ... Run the actual build ...
-            }
-        }
-    }
-}
-
-// Give the branches to Jenkins for parallel execution:
-parallel branches
-
-node('master') {
-    ... Publish buid results ...
-}
-```
 This is a very general template that you can use whenever you generate parallel branches using for loops. We'll use it in our example, too.
 
 ## The example: Integrating Thymeleaf and Jackson
@@ -110,17 +89,19 @@ The only other step to prepare your Jenkins for this tutorial is to make sure yo
 If you already have at least two slave nodes configured, you are fine - continue with the next section.
 Otherwise, you should now create some slaves. You do not need another machine for it if yours is able to run Docker. Open the node configuration and select 'New Node'. You should see a dialog like this:
 
-![](images/jap-configure-node.png)
+{% include img.html
+   caption="Configuring a node" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-configure-node.png" %}
 
 Edit the configuration as shown in the image. The most important part is, of course, the launch command (you may have to adjust this a little depending on your OS and the installed Jenkins version):
 
-```sh
-docker run -i --rm --name jenkins-agent-1 jenkinsci/slave:3.7-1 java -jar /usr/share/jenkins/slave.jar
-```
+{% include code-paragraph.html code="docker run -i --rm --name jenkins-agent-1 jenkinsci/slave:3.7-1 java -jar /usr/share/jenkins/slave.jar" %}
 
 Set up at least two nodes like this. Afterwards, your nodes configuration should look like this:
 
-![](images/jap-nodes.png)
+{% include img.html
+   caption="Listing available nodes" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-nodes.png" %}
 
 ##### Create a pipeline project
 Last but not least, you should create the actual pipeline project. We assume that you are familar with this process, so we'll outline only the general parameters.
@@ -136,12 +117,16 @@ Now you have the setup finished. Let's go and run it.
 ## Running the pipelines
 Simple click on 'Build now'. The pipeline should start and, depending on your machine, finish in a timeframe from 30 seconds to 120 seconds.
 
-![Build in progress](images/jap-stage-view-build-in-progress.png)
+{% include img.html
+   caption="Build in progress" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-stage-view-build-in-progress.png" %}
 
 If it seems to hang after the first stage, check if your slave nodes have actually started up successfully!
 After the pipeline has completed, you should see this:
 
-![After build](images/jap-stage-view-after-build.png)
+{% include img.html
+   caption="After build" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-stage-view-after-build.png" %}
 
 The pipeline is now displayed in yellow color, meaning it is 'unstable'. This isn't a mistake because we do not consider the build as 'failed' if one of the parallel stages fail (actually, we know quite well that Thymeleaf doesn't build with Jackson 2.0.0, so this sample pipeline should never become green).
 Please not that if your pipeline is red instead, something went wrong (in this case, you should look at the console log and see what failed).
@@ -150,74 +135,20 @@ Please not that if your pipeline is red instead, something went wrong (in this c
 Let's now have look at the actual pipeline script that we were running (we just provide excerpts here for the sake of readability - you can view the whole [Jenkinsfile](https://github.com/comsysto/jenkins-lab-shared-pipeline/blob/master/parallel-builds/Jenkinsfile) at our Github project).  
 
 The general layout of the script follows the template we introduced earlier, with some modifications. First, we run a single thread on the master node to checkout ThymeLeaf and stash it:
-```groovy
-node('master') {
-    stage('Checkout ThymeLeaf') {
-        git url: 'https://github.com/thymeleaf/thymeleaf.git',
-            branch: '3.0-master'
-        stash name: 'thymeleaf-sources',
-              includes: 'pom.xml,src/*'
-    }
-}
-```
+
+{% include gist.html id="91ef104dd03cc9aa607cb1d3d669e0c7" %}
+
 Why do we do this? We could also checkout from Git later on the build slaves. In that case, however, we'd checkout once for each build or even more times if we want to clean the workspace between builds on the same slave. To avoid this redundancy, we check Thymeleaf out once and then put its files on Stash - the preferred way to transport non-transient build data between nodes.
 
 Next, we'll define our parallel branches:
 
-```groovy
-List<StageDef> stageDefs = [
-        new StageDef("2.8.9"),
-        new StageDef("2.6.3"),
-        new StageDef("2.6.2"),
-        new StageDef("2.0.0")]
-```
+{% include gist.html id="8b09ce4831cfd83a13d18f6835a2bea3" %}
 
 We will use this list to loop through the versions of Jackson we want to check for compatibility with Thymeleaf. The 'StageDef' structure is actually so simple that we could as well have used a simple string instadt, but we chose this more complicated variant to serve as a template for real-world stage definitions that may contain more data, for example additional library dependencies or branch-individual settings.
 
 Next, we define our parallel stages:
 
-```groovy
-def branches = [:]
-
-// Loop through the stage definitions and define the parallel stages:
-for (stageDef in stageDefs) {
-
-    // Never inline this!
-    String jacksonVersion = stageDef.jacksonVersion
-
-    String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
-    String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
-
-    branches[branchName] = {
-
-        // Start the branch with a node definition. We explicitly exclude the
-        // master node, so only the two slaves will do builds:
-        node('!master') {
-            withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
-                stage(branchName) {
-                    try {
-                        // First, unstash thymeleaf:
-                        unstash name: 'thymeleaf-sources'
-
-                        // Run the build, overwriting the Jackson version. We
-                        // also need to skip the integrity check since we don't
-                        // have access to the private signing key:
-                        sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dgpg.skip=true"
-
-                        // Store the current dependency tree to a file and stash
-                        // it for the HTML report:
-                        sh "mvn -B dependency:tree -Djackson.version=${jacksonVersion} | tee target/${outFileName}"
-                        stash name: outFileName, includes: "target/${outFileName}"
-                    }
-                    catch (ignored) {
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                }
-            }
-        }
-    }
-}
-```
+{% include gist.html id="c2bf132f1af04cb944e4a7f6da7cd723" %}
 
 What's happening here?
 1. For each stage definition, we create a new branch with a name (indicating the Jackson version to be integrated) and an output file that will contain the current dependency tree.
@@ -231,25 +162,12 @@ Please note that global variables like ``stageDef`` must be serializable, becaus
 #### A possible pitfall: Inlining stage definitions
 You may stumble about the comment in line 6: _'Never inline this!'_.
 This is a pitfall that is well known to experienced Groovy programmers, but may come as a time-consuming surprise to people better versed in other programming languages (e.g. Java). You'll encounter the issue if you do something like this:
-```groovy
+{% include gist.html id="9ee9eaf5d7c1d7371b57c112ec3be4b1" %}
 
-for (stageDef in stageDefs) {
-    branches[branchName] = {
-
-        node('!master') {
-            withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
-
-                // Here is the big issue - stageDef is inlined:
-                stage("Build ThymeLeaf with Jackson " + stageDef.jacksonVersion) {
-                    // ...
-                }
-            }
-        }
-    }
-}
-```
 You can see the result immediately on the pipeline:
-![](images/jap-stage-view-after-build-loop-bug.png)
+{% include img.html
+   caption="Result of erroneous inline" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-stage-view-after-build-loop-bug.png" %}
 
 Every stage builds now against Jackson 2.0.0. But why?
 
@@ -261,7 +179,9 @@ One disadvantage of the standard pipeline view is that you can't see very well h
 
 If you have installed Blue Ocean, you should see a link 'Blue Ocean' on the navigaion bar to the left. Click on it now, and Jenkins will change its face:
 
-![](images/jap-blue-ocean-build-in-progress.png)
+{% include img.html
+   caption="Blue ocean - build in progress" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-blue-ocean-build-in-progress.png" %}
 
 This looks nice and provides great visualization for parallel pipeline stages. As you will realize, it also has its disadvantages:
 * It is full screen - while Blue Ocean is active, you have no access to the normal UI's features
@@ -272,56 +192,23 @@ You can leave Blue Ocean anytime: just click on the right-hand arrow left of the
 
 ### What about stage-specific result colors?
 You may have noticed that the pipeline will be colored fully yellow after the build. The same is the case with Blue Ocean:
-![](images/jap-blue-ocean-after-build.png)
+{% include img.html
+   caption="Blue ocean - build finished unstable" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-blue-ocean-after-build.png" %}
 
 So, why don't we color the individual stages in red or green, depending on the build result? The answer is simple: this is not (yet) possible with Jenkins pipeline. A build status is global for the whole pipeline. Individual error status of stages seems to be a feature that is frequently asked for by users and very difficult to solve by the developers, as you can determine e.g. from [JENKINS-39203](https://issues.jenkins-ci.org/browse/JENKINS-39203) and the related [JENKINS-43995](https://issues.jenkins-ci.org/browse/JENKINS-43995).
 
 ### The alternative: HTML Reports
 As a workaround for Jenkins' inability to display the pipeline stages in different colors, we resort to creating the report ourselves. To achieve this, we use the [Html Publisher  plugin](https://jenkins.io/doc/pipeline/steps/htmlpublisher/) and, after the parallel builds have completed, put together some simple HTML that can be accessed on the build's navigation bar:
-```groovy
-node('master') {
-    stage('Publish Report') {
-        sh "mkdir -p target"
-        writeFile file: "target/integration-result.html",
-                  text: buildHtmlReport(stageDefs)
-        publishHTML([
-                allowMissing         : false,
-                alwaysLinkToLastBuild: true,
-                keepAll              : true,
-                reportDir            : 'target',
-                reportFiles          : 'integration-result.html',
-                reportName           : 'Integration result'])
-    }
-}
-
-private String buildHtmlReport(List<StageDef> stageDefs) {
-    // ... HTML header here ...
-    for (stageDef in stageDefs) {
-        String jacksonVersion = stageDef.jacksonVersion
-        String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
-
-        // Determine the success of the build based on presence/absence of the
-        // dependency tree file on stash:
-        try {
-            unstash name: outFileName
-            success = true
-        }
-        catch (ignored) {
-            success = false
-        }
-
-        // ... put together some HTML here that shows the build result ...
-    }
-    // ... HTML footer here ...
-    return s
-}
-```
+{% include gist.html id="40eaf94207e5b84ceac1b14291bf79f4" %}
 
 We rely on the fact here that the dependency tree info is only written/stashed if the Maven build succeeded (you can make this more complex, of course, but you will have to write your build result to stash in order to process it here).
 
 The output looks like this:
 
-![Build result](images/jap-integration-result.png)
+{% include img.html
+   caption="Build result" 
+   url="https://media.comsysto.com/images/blogpost-jenkins-parallel-pipelines/jap-integration-result.png" %}
 
 ## Conclusion
 We hope that you have enjoyed reading this post and that we could provide you with some useful insights on actually using Jenkins Pipeline for parallel builds, especially concerning the various quirks and pitfalls we encountered while working with this feature:
