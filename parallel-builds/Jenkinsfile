@@ -1,4 +1,10 @@
+
+// In Jenkins pipeline, everything happens on a node. For preparation work that
+// doesn't require a lot of processing power, we'll use the master node:
 node('master') {
+
+    // The first stage will checkout Apache Thymeleaf and, since we do not want
+    // to do that again for every integration step, stash it for later use:
     stage('Checkout ThymeLeaf') {
         git url: 'https://github.com/thymeleaf/thymeleaf.git',
             branch: '3.0-master'
@@ -7,33 +13,49 @@ node('master') {
     }
 }
 
+// This is a custom data structure we'll use to define our parallel builds:
 List<StageDef> stageDefs = [
         new StageDef("2.8.9"),
         new StageDef("2.6.3"),
         new StageDef("2.6.2"),
         new StageDef("2.0.0")]
 
+// The branches structure is a map from branch name to branch code. This is the
+// argument we'll give to the 'parallel' build step later:
 def branches = [:]
 
+// Loop through the stage definitions and define the parallel stages:
 for (stageDef in stageDefs) {
 
+    // Never inline this!
     String jacksonVersion = stageDef.jacksonVersion
+
     String branchName = "Build ThymeLeaf with Jackson " + jacksonVersion
     String outFileName = "thymeleaf-with-jackson-${jacksonVersion}.dependencies"
 
     branches[branchName] = {
+
+        // Start the branch with a node definition. We explicitly exclude the
+        // master node, so only the two slaves will do builds:
         node('!master') {
             withEnv(["PATH+MAVEN=${tool 'Maven 3'}/bin"]) {
                 stage(branchName) {
                     try {
+                        // First, unstash thymeleaf:
                         unstash name: 'thymeleaf-sources'
 
+                        // Run the build, overwriting the Jackson version. We
+                        // also need to skip the integrity check since we don't
+                        // have access to the private signing key:
                         sh "mvn -B clean install -Djackson.version=${jacksonVersion} -Dgpg.skip=true"
+
+                        // Store the current dependency tree to a file and stash
+                        // it for the HTML report:
                         sh "mvn -B dependency:tree -Djackson.version=${jacksonVersion} | tee target/${outFileName}"
                         stash name: outFileName, includes: "target/${outFileName}"
                     }
                     catch (ignored) {
-                        currentBuild.result = 'FAILURE'
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
@@ -43,6 +65,8 @@ for (stageDef in stageDefs) {
 
 parallel branches
 
+// After completing the parallel builds, run the final step on the master node
+// that collects the stashed dependency trees and produces an HTML report:
 node('master') {
     stage('Publish Report') {
         sh "mkdir -p target"
@@ -59,8 +83,7 @@ node('master') {
 }
 
 private String buildHtmlReport(List<StageDef> stageDefs) {
-    StringBuilder sb = new StringBuilder(
-            "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>")
+    def s = "<p><b>Build ${env.BUILD_NUMBER}</b>: </p><p><table border='0' width='50%'>"
 
     for (stageDef in stageDefs) {
         String jacksonVersion = stageDef.jacksonVersion
@@ -73,19 +96,26 @@ private String buildHtmlReport(List<StageDef> stageDefs) {
         catch (ignored) {
             success = false
         }
-        sb.append(
-                "<tr>" +
-                "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
-                "<td width='5%'>&nbsp;</td>" +
-                "<td width='20%'>${success ? "SUCCESS" : "FAILURE"}</td>" +
-                "<td width='5%'>&nbsp;</td>" +
-                "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
-                "</tr>")
+        s += "<tr>" +
+             "<td width='30%'>Built with Jackson ${stageDef.jacksonVersion}</td>" +
+             "<td width='5%'>&nbsp;</td>" +
+             "<td width='20%'>" +
+
+             // Per default, Jenkins filters out all CSS styling, so we use
+             // some deprecated HTML 3.x to color the result:
+             "${success ? "<font color='green'>SUCCESS</font>" : "<font color='red'>FAILURE</font>"}" +
+             "</td>" +
+             "<td width='5%'>&nbsp;</td>" +
+             "<td width='45%'>${success ? "<a href='${outFileName}'>Dependency Tree</a>" : ""}</td>" +
+             "</tr>"
     }
-    sb.append("</table></p>")
-    sb.toString()
+    s += "</table></p>"
+    return s
 }
 
+// This structure is so simple that we could as well have used only a simple
+// string. This more complicated variant was chosen to serve as a template for
+// real-world stages definitions that may not be as simple:
 class StageDef implements Serializable {
 
     String jacksonVersion
