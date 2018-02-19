@@ -45,7 +45,7 @@ In this tutorial, we'll use both UI's and switch forth and back as needed. You'l
 
 ## Parallel Pipeline - concepts
 ### The ``parallel`` step
-Jenkins provides some online help for pipeline steps in form of the page behind the 'Pipeline Syntax' link that you find in the navigation bar of any pipeline project. When you select 'parallel' and click on the little question mark to the right sight, it displys the following:
+Jenkins provides some online help for pipeline steps in form of the page behind the 'Pipeline Syntax' link that you find in the navigation bar of any pipeline project. When you select 'parallel' and click on the little question mark to the right sight, it displays the following:
 
 {% include gist.html id="316ef8f887f37e64cb68d2d9f93288f1" %}
 
@@ -147,7 +147,7 @@ Next, we'll define our parallel branches:
 
 {% include gist.html id="8b09ce4831cfd83a13d18f6835a2bea3" %}
 
-We will use this list to loop through the versions of Jackson we want to check for compatibility with Thymeleaf. The 'StageDef' structure is actually so simple that we could as well have used a simple string instadt, but we chose this more complicated variant to serve as a template for real-world stage definitions that may contain more data, for example additional library dependencies or branch-individual settings.
+We will use this list to loop through the versions of Jackson we want to check for compatibility with Thymeleaf. The 'StageDef' structure is actually so simple that we could as well have used a simple string instead, but we chose this more complicated variant to serve as a template for real-world stage definitions that may contain more data, for example additional library dependencies or branch-individual settings.
 
 Next, we define our parallel stages:
 
@@ -166,6 +166,7 @@ Please note that global variables like ``stageDef`` must be serializable, becaus
 You may stumble about the comment in line 6: _'Never inline this!'_.
 This is a pitfall that is well known to experienced Groovy programmers, but may come as a time-consuming surprise to people better versed in other programming languages (e.g. Java). You'll encounter the issue if you do something like this:
 {% include gist.html id="9ee9eaf5d7c1d7371b57c112ec3be4b1" %}
+
 
 You can see the result immediately on the pipeline:
 {% include img.html
