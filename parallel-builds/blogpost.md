@@ -34,6 +34,9 @@ To remedy this situation, this blog post aims to:
 ### A word about declarative pipelines
 This tutorial is about writing parallel build pipelines in Groovy, in the imperative Jenkins 2 style. Recent versions of Jenkins have introduced yet another format for pipelines that is declarative in nature (meaning that you describe what you _want_ to achive rather than giving commands that describe _how_ to achieve it). For the moment, the Groovy pipeline language is still there and referenced in the official documentation as 'Advanced pipeline syntax'. Since the declarative style is completely new and has not been widely adopted so far, we'll stick to the old style in this post. We suspect that the need for yet another style has arisen as part of Cloudbees' efforts to provide a graphical editor for pipelines as part of the Blue Ocean UI, for which a custom declarative language is generally better suited than Groovy scripts.
 
+### Source code
+You can find the sources on [Github](https://github.com/comsysto/jenkins-lab-shared-pipeline/tree/master/parallel-builds).
+
 ### A word about Blue Ocean
 Another piece of Jenkins that is a little difficult to understand is the 'Blue Ocean' UI which has been around for some time now and used to be advertised as the future UI for Jenkins.
 However, Blue Ocean has not yet replaced the traditional Jenkins UI - you can switch to it by clicking on a link in the navigation bar, but if you are like us, you'll switch back very quickly. That is because, while Blue Ocean looks nice and offers some great visualization (especially for parallel builds, as you'll see below), at the same time it still lacks a lot of features provided by the original UI, and it is currently not forseeable when it will catch up.
