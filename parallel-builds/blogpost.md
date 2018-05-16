@@ -1,4 +1,4 @@
-** This is a draft version of the blogpost. Please visit [our homepage](https://comsysto.com/blog-post/parallel-builds-with-jenkins-pipeline) for the final version. **
+**This is a draft version of the blogpost. Please visit [our homepage](https://comsysto.com/blog-post/parallel-builds-with-jenkins-pipeline) for the final version.**
 
 # Parallel builds with Jenkins Pipeline
 [toc]
